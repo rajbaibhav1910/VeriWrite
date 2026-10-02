@@ -33,7 +33,7 @@ export function describeUploadSupport(): UploadSupport {
   return {
     plain: [...new Set(PLAIN_TEXT_EXTENSIONS)],
     converted: [...CONVERTED_EXTENSIONS],
-    serviceReady: backendConfigured(),
+    serviceReady: true,
     maxBytes: MAX_UPLOAD_BYTES,
   };
 }
@@ -42,7 +42,7 @@ export interface ExtractedText {
   text: string;
   filename: string;
   extension: string;
-  /** "browser" for plain text, "document-service" for converted types. */
+  /** "browser" for plain text and client-converted files, "document-service" for server-converted types. */
   source: "browser" | "document-service";
   characters: number;
 }
@@ -129,29 +129,102 @@ function guardExtractPayload(payload: unknown, filename: string): string {
 }
 
 async function extractConverted(file: File, extension: string): Promise<ExtractedText> {
-  if (!backendConfigured()) {
-    throw new ApiError(
-      "unsupported_file",
-      `.${extension} files need the document conversion service, which is not attached to this copy of VeriWrite.`,
-      "Open the document, copy its text and paste it into the editor — the analysis is identical once the text is in.",
-    );
+  if (backendConfigured()) {
+    try {
+      const payload = await uploadFile<unknown>("/api/files/extract", file, { kind: "detector" });
+      const text = guardExtractPayload(payload, file.name);
+      if (text.trim().length > 0) {
+        return {
+          text,
+          filename: file.name,
+          extension,
+          source: "document-service",
+          characters: text.length,
+        };
+      }
+    } catch {
+      // Fall back to browser-based extraction
+    }
   }
-  const payload = await uploadFile<unknown>("/api/files/extract", file, { kind: "detector" });
-  const text = guardExtractPayload(payload, file.name);
-  if (text.trim().length === 0) {
-    throw new ApiError(
-      "invalid_file",
-      `${file.name} has no selectable text. Scanned documents need OCR, which is not part of this service.`,
-      "Run OCR over the pages first, or paste the text.",
-    );
+
+  if (extension === "docx") {
+    try {
+      const mammoth = await import("mammoth");
+      const buffer = await file.arrayBuffer();
+      const outcome = await mammoth.extractRawText({ arrayBuffer: buffer });
+      const text = outcome.value.trim();
+      if (!text) {
+        throw new ApiError(
+          "invalid_file",
+          `${file.name} contains no readable text.`,
+          "Ensure the Word document contains text, not just images.",
+        );
+      }
+      return {
+        text,
+        filename: file.name,
+        extension,
+        source: "browser",
+        characters: text.length,
+      };
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(
+        "invalid_file",
+        `Could not extract text from ${file.name}.`,
+        "Open the document, copy its text and paste it into the editor.",
+      );
+    }
   }
-  return {
-    text,
-    filename: file.name,
-    extension,
-    source: "document-service",
-    characters: text.length,
-  };
+
+  if (extension === "pdf") {
+    try {
+      const pdfjs = await import("pdfjs-dist");
+      const workerUrl = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
+      pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+      const buffer = await file.arrayBuffer();
+      const doc = await pdfjs.getDocument({ data: new Uint8Array(buffer) }).promise;
+      const pages: string[] = [];
+      for (let i = 1; i <= doc.numPages; i++) {
+        const page = await doc.getPage(i);
+        const textContent = await page.getTextContent();
+        const items = textContent.items
+          .map((item) => ("str" in item ? (item as { str: string }).str : ""))
+          .filter(Boolean);
+        if (items.length > 0) {
+          pages.push(items.join(" "));
+        }
+      }
+      const text = pages.join("\n\n").trim();
+      if (!text) {
+        throw new ApiError(
+          "invalid_file",
+          `${file.name} has no selectable text. Scanned PDFs need OCR.`,
+          "Copy and paste the text directly, or use a PDF with selectable text.",
+        );
+      }
+      return {
+        text,
+        filename: file.name,
+        extension,
+        source: "browser",
+        characters: text.length,
+      };
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(
+        "invalid_file",
+        `Could not extract text from ${file.name}.`,
+        "Check that the PDF has selectable text, or paste the text directly.",
+      );
+    }
+  }
+
+  throw new ApiError(
+    "unsupported_file",
+    `.${extension} files need the document conversion service.`,
+    "Supported types: .txt, .md, .docx, .pdf",
+  );
 }
 
 export type ExtractOutcome =
