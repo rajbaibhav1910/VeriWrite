@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    // DOM because the detector this service runs is the app's own source, and that source
+    // is written against the browser's API surface (`src/lib/api.ts` names `File` and
+    // `DOMException`). Nothing here calls those APIs; the types come along with the shared file.
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    // Same rule the app's tsconfig uses, so `src/lib/**` typechecks identically on both sides.
+    // Explicit `.ts` specifiers are what this tree writes and what Node loads; the alias loader
+    // resolves the extensionless ones the shared engine source uses.
+    "moduleResolution": "bundler",
+    // `vite/client` is here for one line: the shared engine's `src/lib/api.ts` reads
+    // `import.meta.env`, whose type comes from that package and which is guarded at runtime.
+    "types": ["node", "vite/client"],
+    "skipLibCheck": true,
+
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["../src/*"]
+    },
+
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    // Checked here, run straight from these sources by Node's own type stripping
+    // (`npm --prefix backend start`); no emit, which is what allows `.ts` specifiers.
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "exactOptionalPropertyTypes": false,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*.ts"]
+}

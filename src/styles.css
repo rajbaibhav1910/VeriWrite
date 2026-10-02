@@ -1,0 +1,726 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------
+   VeriWrite design tokens
+   Original brand: neutral editorial surfaces + deep cobalt accent.
+   Signal colours are purpose-built for detector analysis, not decoration.
+   ------------------------------------------------------------------ */
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-sans: "Inter", "Inter var", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-serif: "Newsreader", ui-serif, Georgia, Cambria, "Times New Roman",
+    serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", Menlo,
+    Consolas, monospace;
+
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+
+  --tracking-tightest: -0.03em;
+
+  --shadow-card: 0 1px 2px 0 oklch(0.18 0.02 265 / 0.06),
+    0 1px 3px -1px oklch(0.18 0.02 265 / 0.08);
+  --shadow-raised: 0 8px 24px -12px oklch(0.18 0.02 265 / 0.18),
+    0 2px 6px -2px oklch(0.18 0.02 265 / 0.08);
+  --shadow-overlay: 0 24px 48px -16px oklch(0.18 0.02 265 / 0.28);
+
+  --animate-shimmer: shimmer 1.8s linear infinite;
+  --animate-pulse-soft: pulse-soft 2s ease-in-out infinite;
+  --animate-slide-up: slide-up 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Layer enter/exit pairs: Radix Presence needs two distinct animation
+   names, one per direction, to keep the unmount suspended. */
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes overlay-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes popover-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(2px) scale(0.98);
+  }
+}
+
+/* Sheet slides on whichever axis its side needs; the offset is set per side. */
+@keyframes sheet-in {
+  from {
+    translate: var(--sheet-x, 0%) var(--sheet-y, 0%);
+  }
+  to {
+    translate: 0% 0%;
+  }
+}
+
+@keyframes sheet-out {
+  from {
+    translate: 0% 0%;
+  }
+  to {
+    translate: var(--sheet-x, 0%) var(--sheet-y, 0%);
+  }
+}
+
+:root {
+  --radius: 0.5rem;
+
+  /* Surfaces */
+  --background: oklch(0.995 0.001 265);
+  --surface: oklch(0.988 0.002 265);
+  --surface-sunken: oklch(0.968 0.004 265);
+  --card: oklch(1 0 0);
+  --popover: oklch(1 0 0);
+
+  /* Ink */
+  --foreground: oklch(0.22 0.02 265);
+  --card-foreground: oklch(0.22 0.02 265);
+  --popover-foreground: oklch(0.22 0.02 265);
+  --muted: oklch(0.965 0.004 265);
+  --muted-foreground: oklch(0.52 0.017 265);
+
+  /* Brand */
+  --primary: oklch(0.48 0.16 265);
+  --primary-foreground: oklch(0.99 0.004 265);
+  --primary-soft: oklch(0.94 0.03 265);
+  --secondary: oklch(0.7 0.11 195);
+  --secondary-foreground: oklch(0.99 0.004 265);
+  --secondary-soft: oklch(0.95 0.03 195);
+  --accent: oklch(0.96 0.012 265);
+  --accent-foreground: oklch(0.28 0.03 265);
+
+  /* Lines */
+  --border: oklch(0.912 0.006 265);
+  --input: oklch(0.912 0.006 265);
+  --ring: oklch(0.48 0.16 265);
+
+  /* Status */
+  --success: oklch(0.56 0.12 160);
+  --success-soft: oklch(0.95 0.035 160);
+  --warning: oklch(0.72 0.13 78);
+  --warning-soft: oklch(0.96 0.04 78);
+  --error: oklch(0.56 0.19 22);
+  --error-soft: oklch(0.96 0.028 22);
+  --info: oklch(0.55 0.11 245);
+  --info-soft: oklch(0.95 0.03 245);
+
+  /* Detection signal palette — subtle, readable, never rainbow */
+  --signal-human: oklch(0.58 0.11 165);
+  --signal-human-bg: oklch(0.58 0.11 165 / 0.09);
+  --signal-human-line: oklch(0.58 0.11 165 / 0.45);
+  --signal-ai: oklch(0.63 0.14 65);
+  --signal-ai-bg: oklch(0.63 0.14 65 / 0.1);
+  --signal-ai-line: oklch(0.63 0.14 65 / 0.5);
+  --signal-mixed: oklch(0.55 0.12 305);
+  --signal-mixed-bg: oklch(0.55 0.12 305 / 0.09);
+  --signal-mixed-line: oklch(0.55 0.12 305 / 0.45);
+  --signal-neutral: oklch(0.6 0.01 265);
+  --signal-neutral-bg: oklch(0.6 0.01 265 / 0.06);
+  --signal-neutral-line: oklch(0.6 0.01 265 / 0.3);
+
+  --sidebar-width: 15.5rem;
+  --sidebar-width-collapsed: 4.25rem;
+  --header-height: 3.75rem;
+}
+
+.dark {
+  --background: oklch(0.168 0.014 268);
+  --surface: oklch(0.196 0.016 268);
+  --surface-sunken: oklch(0.142 0.012 268);
+  --card: oklch(0.212 0.017 268);
+  --popover: oklch(0.224 0.018 268);
+
+  --foreground: oklch(0.945 0.008 265);
+  --card-foreground: oklch(0.945 0.008 265);
+  --popover-foreground: oklch(0.945 0.008 265);
+  --muted: oklch(0.272 0.018 268);
+  --muted-foreground: oklch(0.68 0.02 268);
+
+  --primary: oklch(0.66 0.15 265);
+  --primary-foreground: oklch(0.16 0.02 268);
+  --primary-soft: oklch(0.29 0.055 268);
+  --secondary: oklch(0.72 0.1 195);
+  --secondary-foreground: oklch(0.17 0.02 268);
+  --secondary-soft: oklch(0.28 0.05 195);
+  --accent: oklch(0.288 0.02 268);
+  --accent-foreground: oklch(0.94 0.008 265);
+
+  --border: oklch(0.302 0.018 268);
+  --input: oklch(0.322 0.018 268);
+  --ring: oklch(0.66 0.15 265);
+
+  --success: oklch(0.7 0.12 162);
+  --success-soft: oklch(0.28 0.05 162);
+  --warning: oklch(0.78 0.12 78);
+  --warning-soft: oklch(0.29 0.055 78);
+  --error: oklch(0.71 0.15 22);
+  --error-soft: oklch(0.28 0.055 22);
+  --info: oklch(0.72 0.11 245);
+  --info-soft: oklch(0.28 0.05 245);
+
+  --signal-human: oklch(0.74 0.11 165);
+  --signal-human-bg: oklch(0.74 0.11 165 / 0.13);
+  --signal-human-line: oklch(0.74 0.11 165 / 0.55);
+  --signal-ai: oklch(0.78 0.13 65);
+  --signal-ai-bg: oklch(0.78 0.13 65 / 0.14);
+  --signal-ai-line: oklch(0.78 0.13 65 / 0.6);
+  --signal-mixed: oklch(0.74 0.11 305);
+  --signal-mixed-bg: oklch(0.74 0.11 305 / 0.13);
+  --signal-mixed-line: oklch(0.74 0.11 305 / 0.55);
+  --signal-neutral: oklch(0.7 0.015 268);
+  --signal-neutral-bg: oklch(0.7 0.015 268 / 0.1);
+  --signal-neutral-line: oklch(0.7 0.015 268 / 0.4);
+
+  --shadow-card: 0 1px 2px 0 oklch(0.08 0.01 268 / 0.5);
+  --shadow-raised: 0 8px 24px -12px oklch(0.05 0.01 268 / 0.7);
+  --shadow-overlay: 0 24px 48px -16px oklch(0.05 0.01 268 / 0.8);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary-soft: var(--secondary-soft);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-error: var(--error);
+  --color-error-soft: var(--error-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+
+  --color-signal-human: var(--signal-human);
+  --color-signal-human-bg: var(--signal-human-bg);
+  --color-signal-human-line: var(--signal-human-line);
+  --color-signal-ai: var(--signal-ai);
+  --color-signal-ai-bg: var(--signal-ai-bg);
+  --color-signal-ai-line: var(--signal-ai-line);
+  --color-signal-mixed: var(--signal-mixed);
+  --color-signal-mixed-bg: var(--signal-mixed-bg);
+  --color-signal-mixed-line: var(--signal-mixed-line);
+  --color-signal-neutral: var(--signal-neutral);
+  --color-signal-neutral-bg: var(--signal-neutral-bg);
+  --color-signal-neutral-line: var(--signal-neutral-line);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--primary-soft);
+    color: var(--foreground);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+/*
+ * Rich-text document surface (TipTap). The editor is the reading view too, so the
+ * typography here is the document, not a wrapper: headings, lists and quotes are
+ * styled rather than left to browser defaults.
+ */
+@layer components {
+  .tiptap {
+    color: var(--foreground);
+    cursor: text;
+    font-size: 0.9375rem;
+    line-height: 1.75;
+    min-height: 18rem;
+    outline: none;
+    padding: 1rem 1.25rem 1.5rem;
+    word-break: break-word;
+  }
+
+  .tiptap > * + * {
+    margin-top: 0.8em;
+  }
+
+  .tiptap h2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .tiptap h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  .tiptap ul,
+  .tiptap ol {
+    padding-left: 1.4em;
+  }
+
+  .tiptap ul {
+    list-style: disc;
+  }
+
+  .tiptap ol {
+    list-style: decimal;
+  }
+
+  .tiptap li + li {
+    margin-top: 0.25em;
+  }
+
+  .tiptap blockquote {
+    border-left: 2px solid var(--border);
+    color: var(--muted-foreground);
+    padding-left: 1em;
+  }
+
+  .tiptap code {
+    background: var(--muted);
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    padding: 0.1em 0.32em;
+  }
+
+  .tiptap pre {
+    background: var(--surface-sunken);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    overflow-x: auto;
+    padding: 0.75em 0.9em;
+  }
+
+  .tiptap pre code {
+    background: none;
+    padding: 0;
+  }
+
+  .tiptap hr {
+    border: 0;
+    border-top: 1px solid var(--border);
+    margin: 1.2em 0;
+  }
+
+  .tiptap a {
+    color: var(--primary);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .tiptap p.is-editor-empty:first-child::before,
+  .tiptap .is-empty::before {
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+    color: var(--muted-foreground);
+  }
+
+  .tiptap .ProseMirror-selectednode {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* Sentence-level analysis marks: one soft tint per signal state, so a page of
+     findings stays readable instead of turning into a colour chart. */
+  .vw-sentence {
+    border-radius: 0.2rem;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    cursor: pointer;
+    transition: background-color 120ms ease;
+  }
+
+  .vw-sentence--human {
+    background: var(--signal-human-bg);
+    box-shadow: inset 0 -1px 0 var(--signal-human-line);
+  }
+
+  .vw-sentence--ai {
+    background: var(--signal-ai-bg);
+    box-shadow: inset 0 -1px 0 var(--signal-ai-line);
+  }
+
+  .vw-sentence--mixed {
+    background: var(--signal-mixed-bg);
+    box-shadow: inset 0 -1px 0 var(--signal-mixed-line);
+  }
+
+  .vw-sentence--neutral {
+    background: var(--signal-neutral-bg);
+    box-shadow: inset 0 -1px 0 var(--signal-neutral-line);
+  }
+
+  .vw-sentence--human:hover,
+  .vw-sentence--human.vw-sentence--selected {
+    background: color-mix(in oklab, var(--signal-human) 20%, transparent);
+  }
+
+  .vw-sentence--ai:hover,
+  .vw-sentence--ai.vw-sentence--selected {
+    background: color-mix(in oklab, var(--signal-ai) 20%, transparent);
+  }
+
+  .vw-sentence--mixed:hover,
+  .vw-sentence--mixed.vw-sentence--selected {
+    background: color-mix(in oklab, var(--signal-mixed) 20%, transparent);
+  }
+
+  .vw-sentence--neutral:hover,
+  .vw-sentence--neutral.vw-sentence--selected {
+    background: color-mix(in oklab, var(--signal-neutral) 20%, transparent);
+  }
+
+  .vw-sentence--selected {
+    box-shadow:
+      inset 0 -1px 0 currentColor,
+      0 0 0 1px color-mix(in oklab, var(--ring) 55%, transparent);
+  }
+
+  .vw-sentence--flagged::before {
+    content: "";
+    display: inline-block;
+    width: 0.3rem;
+    height: 0.3rem;
+    margin-inline-end: 0.25rem;
+    vertical-align: 0.15em;
+    border-radius: 9999px;
+    background: currentColor;
+    opacity: 0.55;
+  }
+
+  .vw-sentence--scored::after {
+    content: attr(data-score) "%";
+    margin-inline-start: 0.25rem;
+    font-size: 0.625rem;
+    font-variant-numeric: tabular-nums;
+    vertical-align: 0.25em;
+    opacity: 0.65;
+  }
+
+  /* Grammar findings: a wavy underline carries the category colour, so the
+     words themselves stay untouched until a fix is actually applied. */
+  .vw-issue {
+    --vw-issue-color: var(--muted-foreground);
+    border-radius: 0.15rem;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    cursor: pointer;
+    text-decoration-line: underline;
+    text-decoration-style: wavy;
+    text-decoration-thickness: from-font;
+    text-underline-offset: 0.18em;
+    text-decoration-color: var(--vw-issue-color);
+    background: color-mix(in oklab, var(--vw-issue-color) 9%, transparent);
+    transition:
+      background-color 120ms ease,
+      text-decoration-style 120ms ease;
+  }
+
+  .vw-issue--grammar {
+    --vw-issue-color: var(--warning);
+  }
+
+  .vw-issue--spelling {
+    --vw-issue-color: var(--error);
+  }
+
+  .vw-issue--punctuation {
+    --vw-issue-color: var(--info);
+  }
+
+  .vw-issue--clarity {
+    --vw-issue-color: var(--primary);
+  }
+
+  .vw-issue--style {
+    --vw-issue-color: var(--secondary);
+  }
+
+  .vw-issue:hover {
+    background: color-mix(in oklab, var(--vw-issue-color) 20%, transparent);
+  }
+
+  /* Queued for the next replace, not yet written into the text. */
+  .vw-issue--accepted {
+    text-decoration-style: solid;
+    --vw-issue-color: var(--success);
+    background: color-mix(in oklab, var(--success) 16%, transparent);
+  }
+
+  /* Dismissed: the text reads as ordinary prose again, and the mark only comes
+     back if the reader restores it from the issue list. */
+  .vw-issue--ignored {
+    text-decoration-line: none;
+    background: none;
+    opacity: 0.72;
+  }
+
+  .vw-issue--selected {
+    box-shadow: 0 0 0 1.5px color-mix(in oklab, var(--vw-issue-color) 75%, transparent);
+  }
+
+  /* Matched passages are evidence about the reader's own text, so they are drawn the
+     same way the issue marks are: a decoration over the document, never content in it. */
+  .vw-match {
+    --vw-match-color: var(--warning);
+    border-radius: 0.15rem;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    cursor: pointer;
+    text-decoration-line: underline;
+    text-decoration-style: dashed;
+    text-decoration-thickness: from-font;
+    text-underline-offset: 0.18em;
+    text-decoration-color: var(--vw-match-color);
+    background: color-mix(in oklab, var(--vw-match-color) 10%, transparent);
+    transition: background-color 120ms ease;
+  }
+
+  /* Word-for-word overlap is the stronger claim, so it is drawn heavier. */
+  .vw-match--verbatim {
+    --vw-match-color: var(--error);
+    text-decoration-style: double;
+    text-decoration-thickness: 2px;
+  }
+
+  .vw-match:hover {
+    background: color-mix(in oklab, var(--vw-match-color) 22%, transparent);
+  }
+
+  .vw-match--selected {
+    box-shadow: 0 0 0 1.5px color-mix(in oklab, var(--vw-match-color) 75%, transparent);
+  }
+}
+
+@layer utilities {
+  /* Editorials-grade number alignment for scores and metrics */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .grid-lines {
+    background-image: linear-gradient(
+        to right,
+        var(--border) 1px,
+        transparent 1px
+      ),
+      linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--muted) 25%,
+      var(--accent) 50%,
+      var(--muted) 75%
+    );
+    background-size: 200% 100%;
+    animation: var(--animate-shimmer);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/*
+ * The in-app switch has to do what the system setting does. A media query and an
+ * attribute selector cannot be ORed in one rule, so the declarations are repeated.
+ */
+[data-reduce-motion="on"],
+[data-reduce-motion="on"] *,
+[data-reduce-motion="on"] *::before,
+[data-reduce-motion="on"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/*
+ * Printing a report. Paper has no dark mode: inside the report the light theme's
+ * own tokens are re-declared, so a screen set to dark still prints as black ink on
+ * white and the signal colours keep the values they have on paper.
+ */
+@media print {
+  body {
+    background: #fff;
+  }
+
+  #report-document {
+    --background: oklch(0.995 0.001 265);
+    --surface: oklch(0.988 0.002 265);
+    --surface-sunken: oklch(0.968 0.004 265);
+    --card: oklch(1 0 0);
+    --foreground: oklch(0.22 0.02 265);
+    --card-foreground: oklch(0.22 0.02 265);
+    --muted: oklch(0.965 0.004 265);
+    --muted-foreground: oklch(0.52 0.017 265);
+    --border: oklch(0.912 0.006 265);
+    --success: oklch(0.56 0.12 160);
+    --success-soft: oklch(0.95 0.035 160);
+    --warning: oklch(0.72 0.13 78);
+    --warning-soft: oklch(0.96 0.04 78);
+    --error: oklch(0.56 0.19 22);
+    --error-soft: oklch(0.96 0.028 22);
+    --info: oklch(0.55 0.11 245);
+    --info-soft: oklch(0.95 0.03 245);
+    --signal-human: oklch(0.58 0.11 165);
+    --signal-ai: oklch(0.63 0.14 65);
+    --signal-mixed: oklch(0.55 0.12 305);
+    --signal-neutral: oklch(0.6 0.01 265);
+
+    background-color: var(--surface);
+    color: var(--foreground);
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* A long findings list should break between sentences, never through one. */
+  #report-document section {
+    break-inside: auto;
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "veriwrite-library-service",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "The VeriWrite library service: the schema in src/db/migrations, the store the pages talk to, and the routes in front of it. Not part of the browser build.",
+  "scripts": {
+    "start": "node --experimental-strip-types --import ./src/detector/alias-loader.mjs src/index.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  }
+}
