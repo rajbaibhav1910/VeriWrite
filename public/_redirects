@@ -1,0 +1,3 @@
+# Client-side routes are resolved by the React app, so every path must be served the
+# built index.html with a 200. Without this, refreshing on /detector 404s on a static host.
+/* /index.html 200
